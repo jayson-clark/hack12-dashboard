@@ -111,55 +111,65 @@ export default function UserReports() {
     [
       {
         "center": { "lat": 29.922398, "lng": -95.708702 },
-        "radius": 12000 / 5, // 1/5 of original radius
-        "averageDamageCost": "$48,000",
+        "radius": 15000 / 2, // Increased radius
+        "averageDamageCost": 24000, // Number of people affected
         "totalDamageCost": "$1,152,000",
         "numberOfProperties": 24,
       },
       {
         "center": { "lat": 29.888085, "lng": -95.697472 },
-        "radius": 13000 / 5, // 1/5 of original radius
-        "averageDamageCost": "$52,000",
+        "radius": 16000 / 2, // Increased radius
+        "averageDamageCost": 26000, // Number of people affected
         "totalDamageCost": "$1,300,000",
         "numberOfProperties": 25,
       },
       {
         "center": { "lat": 29.596714, "lng": -95.235756 },
-        "radius": 11000 / 5, // 1/5 of original radius
-        "averageDamageCost": "$49,500",
+        "radius": 14000 / 2, // Increased radius
+        "averageDamageCost": 24500, // Number of people affected
         "totalDamageCost": "$1,237,500",
         "numberOfProperties": 25,
       },
       {
         "center": { "lat": 28.818680, "lng": -96.983347 },
-        "radius": 14000 / 5, // 1/5 of original radius
-        "averageDamageCost": "$55,000",
+        "radius": 17000 / 2, // Increased radius
+        "averageDamageCost": 27500, // Number of people affected
         "totalDamageCost": "$1,375,000",
         "numberOfProperties": 25,
       },
       {
         "center": { "lat": 30.078328, "lng": -94.146564 },
-        "radius": 15000 / 5, // 1/5 of original radius
-        "averageDamageCost": "$51,000",
+        "radius": 18000 / 2, // Increased radius
+        "averageDamageCost": 25500, // Number of people affected
         "totalDamageCost": "$1,275,000",
         "numberOfProperties": 25,
       },
       {
         "center": { "lat": 29.871399, "lng": -95.295613 },
-        "radius": 13000 / 5, // 1/5 of original radius
-        "averageDamageCost": "$47,000",
+        "radius": 16000 / 2, // Increased radius
+        "averageDamageCost": 23500, // Number of people affected
         "totalDamageCost": "$1,172,000",
         "numberOfProperties": 22,
       },
-    ].map((circle) => ({ ...circle, color: getRandomColor() }))
+      // New regions
+      {
+        "center": { "lat": 29.7604, "lng": -95.3698 },
+        "radius": 20000 / 2, // New region with larger radius
+        "averageDamageCost": 30000, // Number of people affected
+        "totalDamageCost": "$1,500,000",
+        "numberOfProperties": 30,
+      },
+    ]
+      .map((circle) => ({ ...circle, color: getRandomColor() }))
+      .sort((a, b) => b.averageDamageCost - a.averageDamageCost)
   );
 
   const [selectedCircles, setSelectedCircles] = useState([]);
 
   // State for statistics
-  const [totalDamageCost, setTotalDamageCost] = useState(185000);
+  const [totalDamageCost, setTotalDamageCost] = useState(0);
   const [totalSamplesAnalyzed, setTotalSamplesAnalyzed] = useState(95);
-  const [totalAffectedAreas, setTotalAffectedAreas] = useState(3);
+  const [totalPeopleAffected, setTotalPeopleAffected] = useState(148500);
 
   // Placeholder function to process sample and update statistics
   const processSample = (file) => {
@@ -175,6 +185,7 @@ export default function UserReports() {
 
       // Randomly assign images to regions and update data accordingly
       const updatedCircleRankings = [...circleRankings];
+      let additionalPeopleAffected = 0;
       files.forEach((file) => {
         const randomIndex = Math.floor(Math.random() * updatedCircleRankings.length);
         const region = updatedCircleRankings[randomIndex];
@@ -187,17 +198,19 @@ export default function UserReports() {
         const newTotalDamageCost = parseInt(region.totalDamageCost.replace(/\D/g, "")) + additionalDamageCost;
         region.totalDamageCost = `$${newTotalDamageCost.toLocaleString()}`;
 
-        // Update the average damage cost
-        region.averageDamageCost = `$${Math.round(newTotalDamageCost / region.numberOfProperties).toLocaleString()}`;
+        // Update the number of people affected
+        const additionalPeople = Math.floor(Math.random() * 5000) + 1000; // Random number of people between 1,000 and 6,000
+        region.averageDamageCost += additionalPeople;
+        additionalPeopleAffected += additionalPeople;
       });
 
-      setCircleRankings(updatedCircleRankings);
+      setCircleRankings(updatedCircleRankings.sort((a, b) => b.averageDamageCost - a.averageDamageCost));
 
       // Update overall statistics
-      const additionalTotalDamage = files.reduce((sum) => sum + Math.floor(Math.random() * 50000) + 20000, 0);
+      const additionalTotalDamage = updatedCircleRankings.reduce((sum, region) => sum + parseInt(region.totalDamageCost.replace(/\D/g, "")), 0);
       setTotalSamplesAnalyzed((prev) => prev + files.length);
-      setTotalDamageCost((prev) => prev + additionalTotalDamage);
-      setTotalAffectedAreas(updatedCircleRankings.filter((region) => region.numberOfProperties > 0).length);
+      setTotalDamageCost(additionalTotalDamage);
+      setTotalPeopleAffected((prev) => prev + additionalPeopleAffected);
     }
   };
 
@@ -214,10 +227,24 @@ export default function UserReports() {
     libraries: ["drawing", "places"],
   });
 
+
   useEffect(() => {
-    // Automatically select all circles when the page loads
-    setSelectedCircles(circleRankings.map((_, index) => index));
-  }, [circleRankings]);
+  // Automatically select all circles when the page loads
+  setSelectedCircles(circleRankings.map((_, index) => index));
+  
+  // Calculate initial total damage cost
+  const initialTotalDamageCost = circleRankings.reduce(
+    (sum, region) => sum + parseInt(region.totalDamageCost.replace(/\D/g, "")), 0
+  );
+  setTotalDamageCost(initialTotalDamageCost);
+
+  // Calculate total number of samples analyzed based on the regions
+  const totalSamples = circleRankings.reduce(
+    (sum, region) => sum + region.numberOfProperties, 0
+  );
+  setTotalSamplesAnalyzed(totalSamples);
+}, [circleRankings]);
+
 
   if (loadError) return <div>Error loading maps</div>;
   if (!isLoaded) return <div>Loading Maps...</div>;
@@ -234,8 +261,11 @@ export default function UserReports() {
   };
 
   return (
-    <Box pt={{ base: "130px", md: "80px", xl: "80px" }} maxW="100vw" w="100%" h="100vh" overflowX="hidden">
-      <SimpleGrid columns={{ base: 1, md: 2 }} gap="20px" mb="20px" h="calc(100% - 130px)">
+    <Box px={5} maxW="100vw" w="100%" h="100vh" overflowX="hidden" display="flex" flexDirection="column">
+      <Box as="header" py={7} textAlign="center" fontSize="4xl" fontWeight="bold">
+        Hurricane Damage Analysis
+      </Box>
+      <SimpleGrid columns={{ base: 1, md: 2 }} gap="20px" mb="20px" flex="1">
         <Box w="100%" h="100%">
           {/* Statistics and Image Upload */}
           <input type="file" id="file-input" onChange={handleImageUpload} ref={fileInputRef} multiple hidden />
@@ -258,8 +288,8 @@ export default function UserReports() {
               startContent={
                 <IconBox w="56px" h="56px" bg={boxBg} icon={<Icon w="32px" h="32px" as={MdAssessment} color={brandColor} />} />
               }
-              name="Total Affected Regions"
-              value={<span>{totalAffectedAreas}</span>}
+              name="Estimated Number of People Affected"
+              value={<span>{totalPeopleAffected.toLocaleString()}</span>}
             />
             <Button
               size="lg"
@@ -273,14 +303,14 @@ export default function UserReports() {
           </SimpleGrid>
 
           {/* Ranking of Polygons */}
-          <Card w="100%" h="calc(100% - 200px)" mt="20px">
+          <Card w="100%" h="calc(100% - 200px - 20px)" mt="20px">
             <FormLabel fontWeight="bold">Highly Affected Areas</FormLabel>
             <Box h="calc(100% - 50px)" overflowY="auto">
               <Table variant="simple">
                 <Thead>
                   <Tr>
                     <Th>Select</Th>
-                    <Th>Average Damage Cost</Th>
+                    <Th>Number of People Affected</Th>
                     <Th>Total Damage Cost</Th>
                     <Th>Number of Samples</Th>
                   </Tr>
@@ -297,7 +327,7 @@ export default function UserReports() {
                           style={{ accentColor: polygon.color, width: "20px", height: "20px" }}
                         />
                       </Td>
-                      <Td>{polygon.averageDamageCost}</Td>
+                      <Td>{polygon.averageDamageCost.toLocaleString()}</Td>
                       <Td>{polygon.totalDamageCost}</Td>
                       <Td>{polygon.numberOfProperties}</Td>
                     </Tr>
@@ -326,7 +356,7 @@ export default function UserReports() {
                 radius={circleRankings[index].radius}
                 options={{
                   fillColor: circleRankings[index].color,
-                  fillOpacity: 0.4,
+                  fillOpacity: 0.6,
                   strokeColor: circleRankings[index].color,
                   strokeOpacity: 1,
                   strokeWeight: 2,
@@ -366,6 +396,9 @@ export default function UserReports() {
           </GoogleMap>
         </Box>
       </SimpleGrid>
+      <Box as="footer" py={4} textAlign="center" fontSize="lg" mt="auto">
+        © 2024 Natural Disaster Damage Analysis Project. All rights reserved.
+      </Box>
     </Box>
   );
 }
