@@ -263,7 +263,7 @@ export default function UserReports() {
   return (
     <Box px={5} maxW="100vw" w="100%" h="100vh" overflowX="hidden" display="flex" flexDirection="column">
       <Box as="header" py={7} textAlign="center" fontSize="4xl" fontWeight="bold">
-        Hurricane Damage Analysis
+        Natural Disaster Damage Analysis
       </Box>
       <SimpleGrid columns={{ base: 1, md: 2 }} gap="20px" mb="20px" flex="1">
         <Box w="100%" h="100%">
