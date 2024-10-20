@@ -16,13 +16,13 @@ import {
 // Custom components
 import IconBox from "components/icons/IconBox";
 import MiniStatistics from "components/card/MiniStatistics";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { MdTrendingUp, MdOutlineAnalytics, MdUpload, MdAssessment } from "react-icons/md";
 
 import Card from "components/card/Card.js";
 
 // Import @react-google-maps/api components
-import { GoogleMap, useLoadScript, Circle, Polyline } from "@react-google-maps/api";
+import { GoogleMap, useLoadScript, Circle, Polyline, Marker } from "@react-google-maps/api";
 
 // Map configuration
 const mapContainerStyle = {
@@ -32,11 +32,19 @@ const mapContainerStyle = {
 };
 
 const center = {
-  lat: 28.25, // Updated center to better represent the average of circles
-  lng: -95.5,
+  lat: 29.77, // Updated center to better represent the average of circles
+  lng: -95.36,
 };
 
-const circleColors = ["red", "green", "blue"];
+// Function to generate random color
+const getRandomColor = () => {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+};
 
 // Hurricane Harvey path coordinates
 const hurricanePath = [
@@ -98,25 +106,64 @@ export default function UserReports() {
 
   // State for uploaded images
   const [images, setImages] = useState([]);
-  const circleRankings = [
-    { name: 'Circle 1', center: { lat: 28.0, lng: -96.0 }, radius: 10000, averageDamageCost: '$50,000', totalDamageCost: '$1,250,000', numberOfProperties: 25, color: circleColors[0] },
-    { name: 'Circle 2', center: { lat: 27.5, lng: -95.5 }, radius: 15000, averageDamageCost: '$75,000', totalDamageCost: '$3,000,000', numberOfProperties: 40, color: circleColors[1] },
-    { name: 'Circle 3', center: { lat: 29.0, lng: -94.5 }, radius: 12000, averageDamageCost: '$60,000', totalDamageCost: '$1,800,000', numberOfProperties: 30, color: circleColors[2] },
-  ];
+
+  const [circleRankings, setCircleRankings] = useState(
+    [
+      {
+        "center": { "lat": 29.922398, "lng": -95.708702 },
+        "radius": 12000 / 5, // 1/5 of original radius
+        "averageDamageCost": "$48,000",
+        "totalDamageCost": "$1,152,000",
+        "numberOfProperties": 24,
+      },
+      {
+        "center": { "lat": 29.888085, "lng": -95.697472 },
+        "radius": 13000 / 5, // 1/5 of original radius
+        "averageDamageCost": "$52,000",
+        "totalDamageCost": "$1,300,000",
+        "numberOfProperties": 25,
+      },
+      {
+        "center": { "lat": 29.596714, "lng": -95.235756 },
+        "radius": 11000 / 5, // 1/5 of original radius
+        "averageDamageCost": "$49,500",
+        "totalDamageCost": "$1,237,500",
+        "numberOfProperties": 25,
+      },
+      {
+        "center": { "lat": 28.818680, "lng": -96.983347 },
+        "radius": 14000 / 5, // 1/5 of original radius
+        "averageDamageCost": "$55,000",
+        "totalDamageCost": "$1,375,000",
+        "numberOfProperties": 25,
+      },
+      {
+        "center": { "lat": 30.078328, "lng": -94.146564 },
+        "radius": 15000 / 5, // 1/5 of original radius
+        "averageDamageCost": "$51,000",
+        "totalDamageCost": "$1,275,000",
+        "numberOfProperties": 25,
+      },
+      {
+        "center": { "lat": 29.871399, "lng": -95.295613 },
+        "radius": 13000 / 5, // 1/5 of original radius
+        "averageDamageCost": "$47,000",
+        "totalDamageCost": "$1,172,000",
+        "numberOfProperties": 22,
+      },
+    ].map((circle) => ({ ...circle, color: getRandomColor() }))
+  );
 
   const [selectedCircles, setSelectedCircles] = useState([]);
 
   // State for statistics
-  const [totalDamageCost, setTotalDamageCost] = useState('$185,000');
+  const [totalDamageCost, setTotalDamageCost] = useState(185000);
   const [totalSamplesAnalyzed, setTotalSamplesAnalyzed] = useState(95);
   const [totalAffectedAreas, setTotalAffectedAreas] = useState(3);
 
   // Placeholder function to process sample and update statistics
   const processSample = (file) => {
-    // Placeholder logic for processing the sample
     console.log("Processing sample: ", file.name);
-    // Update statistics (example logic)
-    setTotalSamplesAnalyzed((prev) => prev + 1);
   };
 
   // Handle image upload
@@ -126,10 +173,31 @@ export default function UserReports() {
       const imageUrls = files.map((file) => URL.createObjectURL(file));
       setImages((prevImages) => [...prevImages, ...imageUrls]);
 
-      // Process each uploaded file
+      // Randomly assign images to regions and update data accordingly
+      const updatedCircleRankings = [...circleRankings];
       files.forEach((file) => {
-        processSample(file);
+        const randomIndex = Math.floor(Math.random() * updatedCircleRankings.length);
+        const region = updatedCircleRankings[randomIndex];
+
+        // Update the number of properties (samples) in the region
+        region.numberOfProperties += 1;
+
+        // Update the total damage cost for the region
+        const additionalDamageCost = Math.floor(Math.random() * 50000) + 20000; // Random damage cost between $20,000 and $70,000
+        const newTotalDamageCost = parseInt(region.totalDamageCost.replace(/\D/g, "")) + additionalDamageCost;
+        region.totalDamageCost = `$${newTotalDamageCost.toLocaleString()}`;
+
+        // Update the average damage cost
+        region.averageDamageCost = `$${Math.round(newTotalDamageCost / region.numberOfProperties).toLocaleString()}`;
       });
+
+      setCircleRankings(updatedCircleRankings);
+
+      // Update overall statistics
+      const additionalTotalDamage = files.reduce((sum) => sum + Math.floor(Math.random() * 50000) + 20000, 0);
+      setTotalSamplesAnalyzed((prev) => prev + files.length);
+      setTotalDamageCost((prev) => prev + additionalTotalDamage);
+      setTotalAffectedAreas(updatedCircleRankings.filter((region) => region.numberOfProperties > 0).length);
     }
   };
 
@@ -145,6 +213,11 @@ export default function UserReports() {
     googleMapsApiKey: "AIzaSyByJS1l2S-tY0k-KAWRe5ljrDf9u-leyeg", // Replace with your API key
     libraries: ["drawing", "places"],
   });
+
+  useEffect(() => {
+    // Automatically select all circles when the page loads
+    setSelectedCircles(circleRankings.map((_, index) => index));
+  }, [circleRankings]);
 
   if (loadError) return <div>Error loading maps</div>;
   if (!isLoaded) return <div>Loading Maps...</div>;
@@ -172,7 +245,7 @@ export default function UserReports() {
                 <IconBox w="56px" h="56px" bg={boxBg} icon={<Icon w="32px" h="32px" as={MdTrendingUp} color={brandColor} />} />
               }
               name="Total Damage Cost"
-              value={<span>{totalDamageCost}</span>}
+              value={<span>${totalDamageCost.toLocaleString()}</span>}
             />
             <MiniStatistics
               startContent={
@@ -214,14 +287,14 @@ export default function UserReports() {
                 </Thead>
                 <Tbody>
                   {circleRankings.map((polygon, index) => (
-                    <Tr key={index} onClick={() => handleRowClick(index)} style={{ cursor: 'pointer' }}>
+                    <Tr key={index} onClick={() => handleRowClick(index)} style={{ cursor: "pointer" }}>
                       <Td>
                         <input
                           type="checkbox"
                           id={`circle-${index}`}
                           checked={selectedCircles.includes(index)}
                           onChange={() => handleRowClick(index)}
-                          style={{ accentColor: polygon.color, width: '20px', height: '20px' }}
+                          style={{ accentColor: polygon.color, width: "20px", height: "20px" }}
                         />
                       </Td>
                       <Td>{polygon.averageDamageCost}</Td>
@@ -240,7 +313,7 @@ export default function UserReports() {
           <GoogleMap
             mapContainerStyle={mapContainerStyle}
             center={center}
-            zoom={6}
+            zoom={8}
             options={{
               disableDefaultUI: true, // Remove default UI elements
               mapTypeId: "satellite", // Set map to satellite view
@@ -275,6 +348,21 @@ export default function UserReports() {
                 strokeWeight: 3,
               }}
             />
+            {hurricanePath.map((point, index) => (
+              <Marker
+                key={index}
+                position={point}
+                options={{
+                  icon: {
+                    path: window.google.maps.SymbolPath.CIRCLE,
+                    scale: 4,
+                    fillColor: "#00FF00",
+                    fillOpacity: 1,
+                    strokeWeight: 0,
+                  },
+                }}
+              />
+            ))}
           </GoogleMap>
         </Box>
       </SimpleGrid>
