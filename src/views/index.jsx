@@ -183,34 +183,36 @@ export default function UserReports() {
       const imageUrls = files.map((file) => URL.createObjectURL(file));
       setImages((prevImages) => [...prevImages, ...imageUrls]);
 
-      // Randomly assign images to regions and update data accordingly
-      const updatedCircleRankings = [...circleRankings];
-      let additionalPeopleAffected = 0;
-      files.forEach((file) => {
-        const randomIndex = Math.floor(Math.random() * updatedCircleRankings.length);
-        const region = updatedCircleRankings[randomIndex];
+      setTimeout(() => {
+        // Randomly assign images to regions and update data accordingly
+        const updatedCircleRankings = [...circleRankings];
+        let additionalPeopleAffected = 0;
+        files.forEach((file) => {
+          const randomIndex = Math.floor(Math.random() * updatedCircleRankings.length);
+          const region = updatedCircleRankings[randomIndex];
 
-        // Update the number of properties (samples) in the region
-        region.numberOfProperties += 1;
+          // Update the number of properties (samples) in the region
+          region.numberOfProperties += 1;
 
-        // Update the total damage cost for the region
-        const additionalDamageCost = Math.floor(Math.random() * 50000) + 20000; // Random damage cost between $20,000 and $70,000
-        const newTotalDamageCost = parseInt(region.totalDamageCost.replace(/\D/g, "")) + additionalDamageCost;
-        region.totalDamageCost = `$${newTotalDamageCost.toLocaleString()}`;
+          // Update the total damage cost for the region
+          const additionalDamageCost = Math.floor(Math.random() * 50000) + 20000; // Random damage cost between $20,000 and $70,000
+          const newTotalDamageCost = parseInt(region.totalDamageCost.replace(/\D/g, "")) + additionalDamageCost;
+          region.totalDamageCost = `$${newTotalDamageCost.toLocaleString()}`;
 
-        // Update the number of people affected
-        const additionalPeople = Math.floor(Math.random() * 5000) + 1000; // Random number of people between 1,000 and 6,000
-        region.averageDamageCost += additionalPeople;
-        additionalPeopleAffected += additionalPeople;
-      });
+          // Update the number of people affected
+          const additionalPeople = Math.floor(Math.random() * 5000) + 1000; // Random number of people between 1,000 and 6,000
+          region.averageDamageCost += additionalPeople;
+          additionalPeopleAffected += additionalPeople;
+        });
 
-      setCircleRankings(updatedCircleRankings.sort((a, b) => b.averageDamageCost - a.averageDamageCost));
+        setCircleRankings(updatedCircleRankings.sort((a, b) => b.averageDamageCost - a.averageDamageCost));
 
-      // Update overall statistics
-      const additionalTotalDamage = updatedCircleRankings.reduce((sum, region) => sum + parseInt(region.totalDamageCost.replace(/\D/g, "")), 0);
-      setTotalSamplesAnalyzed((prev) => prev + files.length);
-      setTotalDamageCost(additionalTotalDamage);
-      setTotalPeopleAffected((prev) => prev + additionalPeopleAffected);
+        // Update overall statistics
+        const additionalTotalDamage = updatedCircleRankings.reduce((sum, region) => sum + parseInt(region.totalDamageCost.replace(/\D/g, "")), 0);
+        setTotalSamplesAnalyzed((prev) => prev + files.length);
+        setTotalDamageCost(additionalTotalDamage);
+        setTotalPeopleAffected((prev) => prev + additionalPeopleAffected);
+      }, 1500); // Add 2-second delay
     }
   };
 
@@ -227,24 +229,22 @@ export default function UserReports() {
     libraries: ["drawing", "places"],
   });
 
-
   useEffect(() => {
-  // Automatically select all circles when the page loads
-  setSelectedCircles(circleRankings.map((_, index) => index));
-  
-  // Calculate initial total damage cost
-  const initialTotalDamageCost = circleRankings.reduce(
-    (sum, region) => sum + parseInt(region.totalDamageCost.replace(/\D/g, "")), 0
-  );
-  setTotalDamageCost(initialTotalDamageCost);
+    // Automatically select all circles when the page loads
+    setSelectedCircles(circleRankings.map((_, index) => index));
 
-  // Calculate total number of samples analyzed based on the regions
-  const totalSamples = circleRankings.reduce(
-    (sum, region) => sum + region.numberOfProperties, 0
-  );
-  setTotalSamplesAnalyzed(totalSamples);
-}, [circleRankings]);
+    // Calculate initial total damage cost
+    const initialTotalDamageCost = circleRankings.reduce(
+      (sum, region) => sum + parseInt(region.totalDamageCost.replace(/\D/g, "")), 0
+    );
+    setTotalDamageCost(initialTotalDamageCost);
 
+    // Calculate total number of samples analyzed based on the regions
+    const totalSamples = circleRankings.reduce(
+      (sum, region) => sum + region.numberOfProperties, 0
+    );
+    setTotalSamplesAnalyzed(totalSamples);
+  }, [circleRankings]);
 
   if (loadError) return <div>Error loading maps</div>;
   if (!isLoaded) return <div>Loading Maps...</div>;
